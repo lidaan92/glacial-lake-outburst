@@ -74,17 +74,16 @@ def setrun(claw_pkg='geoclaw'):
     clawdata.num_dim = num_dim
 
     # Lower and upper edge of computational domain:
-    clawdata.lower[0] = -120.0      # west longitude
-    clawdata.upper[0] = -60.0       # east longitude
+    # Topo extent = (486810.192865, 3090593.52225) x (, 3082074.88742)
+    clawdata.lower[0] = 486800
+    clawdata.upper[0] = 498600
 
-    clawdata.lower[1] = -60.0       # south latitude
-    clawdata.upper[1] = 0.0         # north latitude
-
-
+    clawdata.lower[1] = 3082100
+    clawdata.upper[1] = 3090500
 
     # Number of grid cells: Coarsest grid
-    clawdata.num_cells[0] = 200
-    clawdata.num_cells[1] = 200
+    clawdata.num_cells[0] = 50
+    clawdata.num_cells[1] = 50
 
     # ---------------
     # Size of system:
@@ -94,10 +93,10 @@ def setrun(claw_pkg='geoclaw'):
     clawdata.num_eqn = 3
 
     # Number of auxiliary variables in the aux array (initialized in setaux)
-    clawdata.num_aux = 3
+    clawdata.num_aux = 1
 
     # Index of aux array corresponding to capacity function, if there is one:
-    clawdata.capa_index = 2
+    clawdata.capa_index = 0
 
     
     
@@ -280,19 +279,19 @@ def setrun(claw_pkg='geoclaw'):
     amrdata = rundata.amrdata
 
     # max number of refinement levels:
-    amrdata.amr_levels_max = 2
+    amrdata.amr_levels_max = 1
 
     # List of refinement ratios at each level (length at least mxnest-1)
-    amrdata.refinement_ratios_x = [2,6]
-    amrdata.refinement_ratios_y = [2,6]
-    amrdata.refinement_ratios_t = [2,6]
+    amrdata.refinement_ratios_x = [2, 6]
+    amrdata.refinement_ratios_y = [2, 6]
+    amrdata.refinement_ratios_t = [2, 6]
 
 
     # Specify type of each aux variable in amrdata.auxtype.
     # This must be a list of length maux, each element of which is one of:
     #   'center',  'capacity', 'xleft', or 'yleft'  (see documentation).
 
-    amrdata.aux_type = ['center','capacity','yleft']
+    amrdata.aux_type = ['center']
 
 
     # Flag using refinement routine flag2refine rather than richardson error
@@ -334,15 +333,12 @@ def setrun(claw_pkg='geoclaw'):
     rundata.regiondata.regions = []
     # to specify regions of refinement append lines of the form
     #  [minlevel,maxlevel,t1,t2,x1,x2,y1,y2]
-    rundata.regiondata.regions.append([3, 3, 0., 10000., -85,-72,-38,-25])
-    rundata.regiondata.regions.append([3, 3, 8000., 26000., -90,-80,-30,-15])
 
     # ---------------
     # Gauges:
     # ---------------
     rundata.gaugedata.gauges = []
     # for gauges append lines of the form  [gaugeno, x, y, t1, t2]
-    rundata.gaugedata.gauges.append([32412, -86.392, -17.975, 0., 1.e10])
     
 
     return rundata
@@ -366,7 +362,7 @@ def setgeo(rundata):
        
     # == Physics ==
     geo_data.gravity = 9.81
-    geo_data.coordinate_system = 2
+    geo_data.coordinate_system = 1
     geo_data.earth_radius = 6367.5e3
 
     # == Forcing Options
@@ -390,17 +386,13 @@ def setgeo(rundata):
     topo_data = rundata.topo_data
     # for topography, append lines of the form
     #    [topotype, minlevel, maxlevel, t1, t2, fname]
-    topo_path = os.path.join(scratch_dir, 'etopo10min120W60W60S0S.asc')
-    topo_data.topofiles.append([2, 1, 3, 0., 1.e10, topo_path])
+    topo_path = os.path.join("topo", "imja.tt3")
+    topo_data.topofiles.append([3, 1, 3, 0., 1.e10, topo_path])
 
     # == setdtopo.data values ==
     dtopo_data = rundata.dtopo_data
     # for moving topography, append lines of the form :   (<= 1 allowed for now!)
     #   [topotype, minlevel,maxlevel,fname]
-    dtopo_path = os.path.join(scratch_dir, 'dtopo_usgs100227.tt3')
-    dtopo_data.dtopofiles.append([3,3,3,dtopo_path])
-    dtopo_data.dt_max_dtopo = 0.2
-
 
     # == setqinit.data values ==
     rundata.qinit_data.qinit_type = 0
