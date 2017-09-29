@@ -20,19 +20,36 @@ subroutine qinit(meqn, mbc, mx, my, xlower, ylower, dx, dy, q, maux, aux)
         real(kind=8) :: upper(2)
     end type lake_region
 
-    type(lake_region), allocatable :: lake_regions(:)
+    type(lake_region), allocatable :: lake_regions(:), cutout_regions(:)
 
     ! Locals
-    integer :: i, j, n
-    integer :: num_regions
-    real(kind=8) :: x, y
+    integer :: i, j, n, k
+    integer :: num_regions, num_cutouts
+    real(kind=8) :: x, y, sigma, deta, A, x_c, y_c
+    logical :: cutout
 
     ! Lake Regions - Data for setting lake_level
     num_regions = 1
     allocate(lake_regions(num_regions))
     lake_regions(1)%lake_level = 5000.d0
-    lake_regions(1)%lower = [0.d0, 1.d0]
-    lake_regions(1)%upper = [0.d0, 1.d0]
+    lake_regions(1)%lower = [491010.d0, 3086250.d0]
+    lake_regions(1)%upper = [493710.d0, 3087250.d0]
+
+    num_cutouts = 3
+    allocate(cutout_regions(num_cutouts))
+    cutout_regions(1)%lower = [491000.d0, 3086900.d0]
+    cutout_regions(1)%upper = [491900.d0, 3087250.d0]
+
+    cutout_regions(2)%lower = [491000.d0, 3086800.d0]
+    cutout_regions(2)%upper = [491200.d0, 3087250.d0]
+    
+    cutout_regions(3)%lower = [491010.d0, 3086250.d0]
+    cutout_regions(3)%upper = [493710.d0, 3087250.d0]
+
+    A = 10.d0
+    sigma = 100.d0
+    x_c = 493000.d0
+    y_c = 3086700.d0
     
     ! Set everything to zero
     q = 0.d0
@@ -43,13 +60,29 @@ subroutine qinit(meqn, mbc, mx, my, xlower, ylower, dx, dy, q, maux, aux)
             y = ylower + (j - 0.5d0) * dy
             do i = 1, mx
                 x = xlower + (i - 0.5d0) * dx
-                if (lake_regions(n)%lower(0) <= x .and.          &
-                    x <= lake_regions(n)%upper(0) .and.          &
-                    lake_regions(n)%lower(1) <= y .and.          &
-                    y <= lake_regions(n)%upper(1)) then
+                if (lake_regions(n)%lower(1) <= x .and.                     &
+                    x <= lake_regions(n)%upper(1) .and.                     &
+                    lake_regions(n)%lower(2) <= y .and.                     &
+                    y <= lake_regions(n)%upper(2)) then
 
-                    q(1, i, j) = max(0.d0, lake_regions(n)%lake_level       &
-                                           - aux(1, i, j))
+                    cutout = .false.
+                    do k = 1, num_cutouts
+                        if (cutout_regions(n)%lower(1) <= x .and.           &
+                            x <= cutout_regions(n)%upper(1) .and.           &
+                            cutout_regions(n)%lower(2) <= y .and.           &
+                            y <= cutout_regions(n)%upper(2)) then
+
+                            cutout = .true.
+                        end if
+                    end do
+                    if (.not.cutout) then
+                        q(1, i, j) = max(0.d0, lake_regions(n)%lake_level &
+                                     - aux(1, i, j))
+                        if (q(1, i, j) > 0.d0) then
+                            deta = A * exp(-((x - x_c)**2 + (y - y_c)**2) / sigma**2)
+                            q(1, i, j) = q(1, i, j) + deta
+                        end if
+                    end if
                 end if
             end do
         end do
