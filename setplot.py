@@ -71,10 +71,14 @@ def setplot(plotdata=None):
     # Figure for surface
     #-----------------------------------------
     
-    extents = {"Full Domain": [486800, 498600, 3082100, 3090500],
-               "Zoom": (491010, 493710, 3086250, 3087250)}
+    extents = {"Full Domain": {'extent': [486800, 498600, 3082100, 3090500],
+                               'show_contours': False,
+                               'show_patches': 1},
+               "Zoom": {'extent': (490500, 493800, 3086250, 3087250),
+                        'show_contours': True,
+                        'show_patches': 0}}
 
-    for (name, extent) in extents.items():
+    for (name, param_dict) in extents.items():
         plotfigure = plotdata.new_plotfigure(name='Surface %s' % name)
 
         # Set up for axes in this figure:
@@ -87,20 +91,30 @@ def setplot(plotdata=None):
         #plotitem.plot_var = geoplot.surface
         plotitem.plot_var = lambda cd: eta(cd.q)
         plotitem.pcolor_cmap = surface_cmap
-        plotitem.pcolor_cmin = -1.0
-        plotitem.pcolor_cmax = 1.0
+        plotitem.pcolor_cmin = -10.0
+        plotitem.pcolor_cmax = 10.0
         plotitem.add_colorbar = True
         plotitem.amr_celledges_show = [0,0,0]
-        plotitem.patchedges_show = 1
+        plotitem.patchedges_show = param_dict['show_patches']
 
         # Bathy contour
         plotitem = plotaxes.new_plotitem(plot_type='2d_contour')
-        plotitem.show = False
+        plotitem.show = param_dict['show_contours']
         plotitem.plot_var = geoplot.topo
-        plotitem.contour_levels = [5000]
-        plotitem.amr_contour_colors = ['r']  # color on each level
-        plotitem.kwargs = {'linestyles':'solid','linewidths':2}
-        plotitem.amr_contour_show = [1,1,1]  
+        plotitem.contour_levels = numpy.arange(5000, 6000, 25)
+        plotitem.amr_contour_colors = ['k']  # color on each level
+        plotitem.kwargs = {'linestyles':'solid','linewidths':1}
+        plotitem.amr_contour_show = [0, 0, 1]  
+        plotitem.celledges_show = 0
+        plotitem.patchedges_show = 0
+
+        plotitem = plotaxes.new_plotitem(plot_type='2d_contour')
+        plotitem.show = param_dict['show_contours']
+        plotitem.plot_var = geoplot.topo
+        plotitem.contour_levels = numpy.arange(4000, 5000, 25)
+        plotitem.amr_contour_colors = ['k']  # color on each level
+        plotitem.kwargs = {'linestyles':'dashed','linewidths':1}
+        plotitem.amr_contour_show = [0, 0, 1]  
         plotitem.celledges_show = 0
         plotitem.patchedges_show = 0
 
@@ -112,9 +126,9 @@ def setplot(plotdata=None):
         plotitem.pcolor_cmax = 5005
         plotitem.add_colorbar = False
         plotitem.amr_celledges_show = [0,0,0]
-        plotitem.patchedges_show = 1
-        plotaxes.xlimits = extent[:2]
-        plotaxes.ylimits = extent[2:]
+        plotitem.patchedges_show = param_dict['show_patches']
+        plotaxes.xlimits = param_dict['extent'][:2]
+        plotaxes.ylimits = param_dict['extent'][2:]
 
     #-----------------------------------------
     # Figures for gauges

@@ -25,7 +25,7 @@ subroutine qinit(meqn, mbc, mx, my, xlower, ylower, dx, dy, q, maux, aux)
     ! Locals
     integer :: i, j, n, k
     integer :: num_regions, num_cutouts
-    real(kind=8) :: x, y, sigma, deta, A, x_c, y_c
+    real(kind=8) :: x, y, sigma, deta, A, x_c, y_c, total_mass
     logical :: cutout
 
     ! Lake Regions - Data for setting lake_level
@@ -41,18 +41,19 @@ subroutine qinit(meqn, mbc, mx, my, xlower, ylower, dx, dy, q, maux, aux)
     cutout_regions(1)%upper = [491900.d0, 3087250.d0]
 
     cutout_regions(2)%lower = [491000.d0, 3086800.d0]
-    cutout_regions(2)%upper = [491200.d0, 3087250.d0]
+    cutout_regions(2)%upper = [491400.d0, 3087250.d0]
     
     cutout_regions(3)%lower = [491010.d0, 3086250.d0]
     cutout_regions(3)%upper = [493710.d0, 3087250.d0]
 
-    A = 10.d0
+    A = 100.d0
     sigma = 100.d0
     x_c = 493000.d0
     y_c = 3086700.d0
     
     ! Set everything to zero
     q = 0.d0
+    total_mass = 0.d0
 
     ! Loop through locations and set anything below given 
     do n = 1, num_regions
@@ -79,6 +80,7 @@ subroutine qinit(meqn, mbc, mx, my, xlower, ylower, dx, dy, q, maux, aux)
                         q(1, i, j) = max(0.d0, lake_regions(n)%lake_level &
                                      - aux(1, i, j))
                         if (q(1, i, j) > 0.d0) then
+                            total_mass = total_mass + deta * aux(2, i, j)
                             deta = A * exp(-((x - x_c)**2 + (y - y_c)**2) / sigma**2)
                             q(1, i, j) = q(1, i, j) + deta
                         end if
@@ -87,5 +89,7 @@ subroutine qinit(meqn, mbc, mx, my, xlower, ylower, dx, dy, q, maux, aux)
             end do
         end do
     end do
+
+    print *, "Total mass addition = ", total_mass
 
 end subroutine qinit
