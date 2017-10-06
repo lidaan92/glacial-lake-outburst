@@ -75,15 +75,16 @@ def setrun(claw_pkg='geoclaw'):
 
     # Lower and upper edge of computational domain:
     # Topo extent = (486810.192865, 3090593.52225) x (, 3082074.88742)
-    clawdata.lower[0] = 486800
-    clawdata.upper[0] = 498600
+    clawdata.lower[0] = 487000
+    clawdata.upper[0] = 498000
 
-    clawdata.lower[1] = 3082100
-    clawdata.upper[1] = 3090500
+    clawdata.lower[1] = 3083000
+    clawdata.upper[1] = 3090000
 
     # Number of grid cells: Coarsest grid
-    clawdata.num_cells[0] = 50
-    clawdata.num_cells[1] = 50
+    coarse_delta = 250
+    clawdata.num_cells[0] = int((clawdata.upper[0] - clawdata.lower[0]) / coarse_delta)
+    clawdata.num_cells[1] = int((clawdata.upper[1] - clawdata.lower[1]) / coarse_delta)
 
     # ---------------
     # Size of system:
@@ -279,12 +280,18 @@ def setrun(claw_pkg='geoclaw'):
     amrdata = rundata.amrdata
 
     # max number of refinement levels:
-    amrdata.amr_levels_max = 3
+    amrdata.amr_levels_max = 4
 
     # List of refinement ratios at each level (length at least mxnest-1)
-    amrdata.refinement_ratios_x = [2, 6]
-    amrdata.refinement_ratios_y = [2, 6]
-    amrdata.refinement_ratios_t = [2, 6]
+    amrdata.refinement_ratios_x = [2, 6, 2]
+    amrdata.refinement_ratios_y = [2, 6, 2]
+    amrdata.refinement_ratios_t = [2, 6, 2]
+    delta = coarse_delta
+    print("Refinement levels (meters):")
+    print("  Level %s:  %s" % (1, delta))
+    for n in range(1, amrdata.amr_levels_max):
+        delta /= amrdata.refinement_ratios_x[n - 1]
+        print("  Level %s:  %s" % (n + 1, delta))
 
 
     # Specify type of each aux variable in amrdata.auxtype.
@@ -344,6 +351,8 @@ def setrun(claw_pkg='geoclaw'):
     # ---------------
     rundata.gaugedata.gauges = []
     # for gauges append lines of the form  [gaugeno, x, y, t1, t2]
+    rundata.gaugedata.gauges.append([1, 491450, 3086550, 
+                                        0.0, rundata.clawdata.tfinal])
     
 
     return rundata

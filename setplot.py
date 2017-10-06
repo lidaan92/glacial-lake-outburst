@@ -74,7 +74,7 @@ def setplot(plotdata=None):
     extents = {"Full Domain": {'extent': [486800, 498600, 3082100, 3090500],
                                'show_contours': False,
                                'show_patches': 1},
-               "Zoom": {'extent': (490500, 493800, 3086250, 3087250),
+               "Zoom": {'extent': (490500, 493800, 3086000, 3087250),
                         'show_contours': True,
                         'show_patches': 0}}
 
@@ -130,27 +130,49 @@ def setplot(plotdata=None):
         plotaxes.xlimits = param_dict['extent'][:2]
         plotaxes.ylimits = param_dict['extent'][2:]
 
-    #-----------------------------------------
+        def draw_rect(rect, axes, style="k--"):
+            """rect = [xlower, ylower, xupper, yupper"""
+            xlower = rect[0]
+            xupper = rect[2]
+            ylower = rect[1]
+            yupper = rect[3]
+            axes.plot([xlower, xupper], [ylower, ylower], style)
+            axes.plot([xupper, xupper], [ylower, yupper], style)
+            axes.plot([xupper, xlower], [yupper, yupper], style)
+            axes.plot([xlower, xlower], [yupper, ylower], style)
+
+        def draw_rects(cd):
+            axes = plt.gca()
+            # 3086900
+            rectangles = [[491000, 3086950, 491900, 3087250], 
+                          [490750, 3086800, 491400, 3087250]]
+            styles = ['r--', 'b--', 'c--']
+            for (i, rect) in enumerate(rectangles):
+                draw_rect(rect, axes, style=styles[i])
+
+        # plotaxes.afteraxes = draw_rects
+
+    # -----------------------------------------
     # Figures for gauges
-    #-----------------------------------------
-    # plotfigure = plotdata.new_plotfigure(name='Surface at gauges', figno=300, \
-    #                 type='each_gauge')
-    # plotfigure.clf_each_gauge = True
+    # -----------------------------------------
+    plotfigure = plotdata.new_plotfigure(name='Surface at gauges', figno=300, \
+                    type='each_gauge')
+    plotfigure.clf_each_gauge = True
 
-    # # Set up for axes in this figure:
-    # plotaxes = plotfigure.new_plotaxes()
-    # plotaxes.xlimits = 'auto'
-    # plotaxes.ylimits = 'auto'
-    # plotaxes.title = 'Surface'
+    # Set up for axes in this figure:
+    plotaxes = plotfigure.new_plotaxes()
+    plotaxes.xlimits = 'auto'
+    plotaxes.ylimits = 'auto'
+    plotaxes.title = 'Surface'
 
-    # # Plot surface as blue curve:
-    # plotitem = plotaxes.new_plotitem(plot_type='1d_plot')
-    # plotitem.plot_var = 3
-    # plotitem.plotstyle = 'b-'
+    # Plot surface as blue curve:
+    plotitem = plotaxes.new_plotitem(plot_type='1d_plot')
+    plotitem.plot_var = 3
+    plotitem.plotstyle = 'b-'
 
-    # # Plot topo as green curve:
-    # plotitem = plotaxes.new_plotitem(plot_type='1d_plot')
-    # plotitem.show = False
+    # Plot topo as green curve:
+    plotitem = plotaxes.new_plotitem(plot_type='1d_plot')
+    plotitem.show = False
 
     # def gaugetopo(current_data):
     #     q = current_data.q
@@ -167,17 +189,17 @@ def setplot(plotdata=None):
     #     t = current_data.t 
     #     gaugeno = current_data.gaugeno
 
-    #     if gaugeno == 32412:
-    #         try:
-    #             plot(TG32412[:,0], TG32412[:,1], 'r')
-    #             legend(['GeoClaw','Obs'],loc='lower right')
-    #         except: pass
-    #         axis((0,t.max(),-0.3,0.3))
+        # if gaugeno == 32412:
+        #     try:
+        #         plot(TG32412[:,0], TG32412[:,1], 'r')
+        #         legend(['GeoClaw','Obs'],loc='lower right')
+        #     except: pass
+        #     axis((0,t.max(),-0.3,0.3))
 
-    #     plot(t, 0*t, 'k')
-    #     n = int(floor(t.max()/3600.) + 2)
-    #     xticks([3600*i for i in range(n)], ['%i' % i for i in range(n)])
-    #     xlabel('time (hours)')
+        # plot(t, 0*t, 'k')
+        # n = int(floor(t.max()/3600.) + 2)
+        # xticks([3600*i for i in range(n)], ['%i' % i for i in range(n)])
+        # xlabel('time (hours)')
 
     # plotaxes.afteraxes = add_zeroline
 
