@@ -340,7 +340,7 @@ def setrun(claw_pkg='geoclaw'):
     rundata.regiondata.regions = []
     # to specify regions of refinement append lines of the form
     #  [minlevel,maxlevel,t1,t2,x1,x2,y1,y2]
-    lake_region = [3, 3, 0.0, rundata.clawdata.tfinal, 
+    lake_region = [3, 3, 0.0, 1e10, 
                    491000, 493700,
                    3086250, 3087250]
 
@@ -352,7 +352,7 @@ def setrun(claw_pkg='geoclaw'):
     rundata.gaugedata.gauges = []
     # for gauges append lines of the form  [gaugeno, x, y, t1, t2]
     rundata.gaugedata.gauges.append([1, 491450, 3086550, 
-                                        0.0, rundata.clawdata.tfinal])
+                                        0.0, 1e10])
     
 
     return rundata

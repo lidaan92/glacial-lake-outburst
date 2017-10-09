@@ -17,6 +17,7 @@ subroutine qinit(meqn, mbc, mx, my, xlower, ylower, dx, dy, q, maux, aux)
 
         ! Is this a region that should be set?
         logical :: init_region
+        integer :: init_type
 
         ! Region specification
         real(kind=8) :: lower(2)
@@ -29,7 +30,8 @@ subroutine qinit(meqn, mbc, mx, my, xlower, ylower, dx, dy, q, maux, aux)
     ! Locals
     integer :: i, j, n, k, region
     integer :: num_regions, num_cutouts
-    real(kind=8) :: xm, x, xp, ym, y, yp, sigma, deta, A, x_c, y_c, total_mass
+    real(kind=8) :: xm, x, xp, ym, y, yp, x_c, y_c
+    real(kind=8) :: sigma, deta, A, theta, total_mass
     logical :: cutout, init_cell
 
     ! Lake Regions - Data for setting lake_level
@@ -38,6 +40,7 @@ subroutine qinit(meqn, mbc, mx, my, xlower, ylower, dx, dy, q, maux, aux)
     
     lake_regions(1)%lake_level = 5000.d0
     lake_regions(1)%init_region = .true.
+    lake_regions(1)%init_type = 2
     lake_regions(1)%lower = [491010.d0, 3086250.d0]
     lake_regions(1)%upper = [493710.d0, 3087250.d0]
 
@@ -49,10 +52,29 @@ subroutine qinit(meqn, mbc, mx, my, xlower, ylower, dx, dy, q, maux, aux)
     lake_regions(3)%upper = [491400.d0, 3087250.d0]
     lake_regions(3)%init_region = .false.
 
+    ! Symmetric Gaussian hump (type 1)
+    !  A = amplitude
+    !  sigma = std. dev.
+    !  (x_c, y_c) = center
+    ! Plane-wave, Gaussian (type 2)
+    !  A = amplitude
+    !  sigma = std. dev.
+    !  (x_c, y_c) = center
+    !  theta = angle from x-axis
+    
+    ! case 1
     A = 100.d0
     sigma = 100.d0
-    x_c = 493000.d0
+    x_c = 493300.d0
     y_c = 3086700.d0
+    theta = 1.570796327d0 ! pi / 2
+
+    ! Case 2
+    ! A = 100.d0
+    ! sigma = 100.d0
+    ! x_c = 491635.d0
+    ! y_c = 3086700.d0
+    ! theta = 1.570796327d0 ! pi / 2
     
     ! Set everything to zero
     q = 0.d0
@@ -90,9 +112,17 @@ subroutine qinit(meqn, mbc, mx, my, xlower, ylower, dx, dy, q, maux, aux)
                 q(1, i, j) = max(0.d0, lake_regions(region)%lake_level &
                              - aux(1, i, j))
                 if (q(1, i, j) > 0.d0) then
-                    total_mass = total_mass + deta * dx * dy
-                    deta = A * exp(-((x - x_c)**2 + (y - y_c)**2) / sigma**2)
+                    deta = 0.d0
+                    select case(lake_regions(region)%init_type)
+                        ! Gaussian
+                        case(1)
+                            deta = A * exp(-((x - x_c)**2 + (y - y_c)**2) / sigma**2)
+                        case(2)
+                            ! TODO:  Implement theta
+                            deta = A * exp(-(x - x_c)**2 / sigma**2)
+                    end select
                     q(1, i, j) = q(1, i, j) + deta
+                    total_mass = total_mass + deta * dx * dy
                 end if
             end if
 

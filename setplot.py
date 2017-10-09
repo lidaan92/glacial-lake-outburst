@@ -28,12 +28,33 @@ wind_cmap = plt.get_cmap('PuBu')
 pressure_cmap = plt.get_cmap('PuBu')
 land_cmap = geoplot.land_colors
 
-def eta(q, DRY_TOL=1e-3):
-    h = q[0, :, :]
-    eta = q[3, :, :] - 5000.0
-    index = numpy.nonzero((numpy.abs(h) < DRY_TOL) + (h == numpy.nan))
-    eta[index[0], index[1]] = numpy.nan
-    return eta
+# Contruct lake mask for plotting
+init_region = [491010, 3086250, 493710, 3087250]
+cutouts = [[491000, 3086950, 491900, 3087250],
+           [490750, 3086800, 491400, 3087250]]
+
+def lake_mask(x, y):
+    region = numpy.where((init_region[0] <= x) * 
+                         (x <= init_region[2]) *
+                         (init_region[1] <= y) * 
+                         (y <= init_region[3]), True, False)
+    for cutout in cutouts:
+        region = numpy.where((cutout[0] < x) * (x < cutout[2]) *
+                             (cutout[1] < y) * (y < cutout[3]), 
+                             False, region)
+
+    return region
+
+
+def surface_or_depth(cd, DRY_TOL=1e-3):
+    h = cd.q[0, :, :]
+    eta = cd.q[3, :, :]
+    b = cd.q[3, :, :] - cd.q[0, :, :] 
+
+    surface = numpy.ma.masked_where(h <= DRY_TOL, eta - 5000.0)
+    depth = numpy.ma.masked_where(h <= DRY_TOL, h)
+    return numpy.where(lake_mask(cd.x, cd.y) * (b < 5000), surface, depth)
+
 
 #--------------------------
 def setplot(plotdata=None):
@@ -70,8 +91,7 @@ def setplot(plotdata=None):
     #-----------------------------------------
     # Figure for surface
     #-----------------------------------------
-    
-    extents = {"Full Domain": {'extent': [486800, 498600, 3082100, 3090500],
+    extents = {"Full Domain": {'extent': [487000, 498000, 3083000, 3090000],
                                'show_contours': False,
                                'show_patches': 1},
                "Zoom": {'extent': (490500, 493800, 3086000, 3087250),
@@ -88,8 +108,9 @@ def setplot(plotdata=None):
 
         # Water
         plotitem = plotaxes.new_plotitem(plot_type='2d_pcolor')
-        #plotitem.plot_var = geoplot.surface
-        plotitem.plot_var = lambda cd: eta(cd.q)
+        # plotitem.plot_var = geoplot.surface
+        plotitem.plot_var = surface_or_depth
+        # plotitem.plot_var = 0
         plotitem.pcolor_cmap = surface_cmap
         plotitem.pcolor_cmin = -10.0
         plotitem.pcolor_cmax = 10.0
