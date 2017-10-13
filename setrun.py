@@ -407,6 +407,7 @@ def setgeo(rundata):
     dtopo_data = rundata.dtopo_data
     # for moving topography, append lines of the form :   (<= 1 allowed for now!)
     #   [topotype, minlevel,maxlevel,fname]
+    dtopo_data.dtopofiles.append([3, 0, 10, "./topo/imja_slide.tt3"])
 
     # == setqinit.data values ==
     rundata.qinit_data.qinit_type = 0

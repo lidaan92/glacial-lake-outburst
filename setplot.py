@@ -29,9 +29,10 @@ pressure_cmap = plt.get_cmap('PuBu')
 land_cmap = geoplot.land_colors
 
 # Contruct lake mask for plotting
-init_region = [491010, 3086250, 493710, 3087250]
-cutouts = [[491000, 3086950, 491900, 3087250],
-           [490750, 3086800, 491400, 3087250]]
+init_region = [491100.0, 3085150.0, 493800.0, 3086400.0]
+cutouts = []
+# cutouts = [[491000, 3086950, 491900, 3087250],
+#            [490750, 3086800, 491400, 3087250]]
 
 def lake_mask(x, y):
     region = numpy.where((init_region[0] <= x) * 
@@ -94,7 +95,7 @@ def setplot(plotdata=None):
     extents = {"Full Domain": {'extent': [487000, 498000, 3083000, 3090000],
                                'show_contours': False,
                                'show_patches': 1},
-               "Zoom": {'extent': (490500, 493800, 3086000, 3087250),
+               "Zoom": {'extent': (490500, 493800, 3085000, 3086500),
                         'show_contours': True,
                         'show_patches': 0}}
 

@@ -35,22 +35,22 @@ subroutine qinit(meqn, mbc, mx, my, xlower, ylower, dx, dy, q, maux, aux)
     logical :: cutout, init_cell
 
     ! Lake Regions - Data for setting lake_level
-    num_regions = 3
+    num_regions = 1
     allocate(lake_regions(num_regions))
-    
+
     lake_regions(1)%lake_level = 5000.d0
     lake_regions(1)%init_region = .true.
     lake_regions(1)%init_type = 2
-    lake_regions(1)%lower = [491010.d0, 3086250.d0]
-    lake_regions(1)%upper = [493710.d0, 3087250.d0]
+    lake_regions(1)%lower = [491100.d0, 3085150.d0]
+    lake_regions(1)%upper = [493800.d0, 3086400.d0]
 
-    lake_regions(2)%lower = [491000.d0, 3086950.d0]
-    lake_regions(2)%upper = [491900.d0, 3087250.d0]
-    lake_regions(2)%init_region = .false.
+    ! lake_regions(2)%lower = [491000.d0, 3086950.d0]
+    ! lake_regions(2)%upper = [491900.d0, 3087250.d0]
+    ! lake_regions(2)%init_region = .false.
 
-    lake_regions(3)%lower = [490750.d0, 3086800.d0]
-    lake_regions(3)%upper = [491400.d0, 3087250.d0]
-    lake_regions(3)%init_region = .false.
+    ! lake_regions(3)%lower = [490750.d0, 3086800.d0]
+    ! lake_regions(3)%upper = [491400.d0, 3087250.d0]
+    ! lake_regions(3)%init_region = .false.
 
     ! Symmetric Gaussian hump (type 1)
     !  A = amplitude
@@ -62,12 +62,19 @@ subroutine qinit(meqn, mbc, mx, my, xlower, ylower, dx, dy, q, maux, aux)
     !  (x_c, y_c) = center
     !  theta = angle from x-axis
     
+    ! Case 0 (no IC)
+    A = 0.d0
+    sigma = 0.d0
+    x_c = 0.d0
+    y_c = 0.d0
+    theta = 0.d0
+
     ! case 1
-    A = 100.d0
-    sigma = 100.d0
-    x_c = 493300.d0
-    y_c = 3086700.d0
-    theta = 1.570796327d0 ! pi / 2
+    ! A = 100.d0
+    ! sigma = 100.d0
+    ! x_c = 493300.d0
+    ! y_c = 3086700.d0
+    ! theta = 1.570796327d0 ! pi / 2
 
     ! Case 2
     ! A = 100.d0
