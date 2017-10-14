@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import subprocess
+
 import numpy
 import matplotlib.pyplot as plt
 
@@ -79,6 +81,12 @@ if __name__ == "__main__":
 
         axes.set_title("t = %s" % str(dtopo.times[i]))
 
+        fig.savefig('./dtopo_plots/slide_%s.png' % i)
+
+    # make a movie
+    cmd = "ffmpeg -r 2 -i dtopo_plots/slide_%1d.png -q:a 0 -q:v 0 -vcodec mpeg4 -vb 20M -r 24 dtopo_plots/slide.mp4"
+    subprocess.call(cmd, shell=True)
+
     dtopo.write(path=dtopo_path)
 
-    plt.show()
+    # plt.show()
