@@ -12,11 +12,11 @@ def transform(x, y, theta=0.0):
 
 def slide_topo(x, y, t, estimated_mass=False):
 
-    x_start, y_start = 492500, 3085500
-    slide_speed = 50
+    x_start, y_start = 492050, 3085100
+    slide_speed = 25
     slide_max_length = 1000.0
     theta = numpy.pi / 3.0
-    sigma = 100.0
+    sigma = 250.0
     A = 100.0
 
     # Transform coordinates

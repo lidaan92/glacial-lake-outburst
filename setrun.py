@@ -128,8 +128,8 @@ def setrun(claw_pkg='geoclaw'):
 
     if clawdata.output_style==1:
         # Output nout frames at equally spaced times up to tfinal:
-        clawdata.num_output_times = 20
-        clawdata.tfinal = 200.0
+        clawdata.num_output_times = 40
+        clawdata.tfinal = 1000.0
         clawdata.output_t0 = True  # output at initial (or restart) time?
 
     elif clawdata.output_style == 2:
