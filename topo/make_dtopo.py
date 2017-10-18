@@ -35,19 +35,23 @@ def slide_topo(x, y, t, estimated_mass=False):
 
     # Compute dtopo
     slide = numpy.zeros(x.shape)
+    estimated_mass = 0.0
 
     # front
     slide += A * numpy.exp(-((eta - eta_c)**2 + (zeta - zeta_c)**2) / sigma**2) * (eta > eta_c)
+    estimated_mass += (A * numpy.pi * numpy.sqrt(sigma) / 4.0) ** 2
 
     # center
     slide += A * numpy.exp(-((zeta - zeta_c)**2) / sigma**2) * (eta  <= eta_c) * (eta >= eta_start)
+    estimated_mass += A * numpy.sqrt(sigma) / 2.0 * numpy.sqrt(2.0 * numpy.pi) * (eta_c - eta_start)
 
     # back
     slide += A * numpy.exp(-((eta - eta_start)**2 + (zeta - zeta_start)**2) / sigma**2) * (eta < eta_start)
+    estimated_mass += (A * numpy.pi * numpy.sqrt(sigma) / 4.0) ** 2
 
     if estimated_mass:
-        mass = 0.0
-        print("Estimated Mass = %s" % mass)
+        print("Estimated Mass = %s Million Tons" % (estimated_mass / 1e6))
+        print("Still need to transform to physical space!")
 
     return slide
 
