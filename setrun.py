@@ -74,7 +74,6 @@ def setrun(claw_pkg='geoclaw'):
     clawdata.num_dim = num_dim
 
     # Lower and upper edge of computational domain:
-    # Topo extent = (486810.192865, 3090593.52225) x (, 3082074.88742)
     clawdata.lower[0] = 487000
     clawdata.upper[0] = 498000
 
@@ -129,7 +128,7 @@ def setrun(claw_pkg='geoclaw'):
     if clawdata.output_style==1:
         # Output nout frames at equally spaced times up to tfinal:
         clawdata.num_output_times = 40
-        clawdata.tfinal = 1000.0
+        clawdata.tfinal = 1200.0
         clawdata.output_t0 = True  # output at initial (or restart) time?
 
     elif clawdata.output_style == 2:
@@ -340,9 +339,7 @@ def setrun(claw_pkg='geoclaw'):
     rundata.regiondata.regions = []
     # to specify regions of refinement append lines of the form
     #  [minlevel,maxlevel,t1,t2,x1,x2,y1,y2]
-    lake_region = [3, 3, 0.0, 1e10, 
-                   491000, 493700,
-                   3086250, 3087250]
+    lake_region = [4, 4, 0.0, 1e10, 491000, 493700, 3085250, 3086250]
 
     rundata.regiondata.regions.append(lake_region)
 
@@ -351,8 +348,9 @@ def setrun(claw_pkg='geoclaw'):
     # ---------------
     rundata.gaugedata.gauges = []
     # for gauges append lines of the form  [gaugeno, x, y, t1, t2]
-    rundata.gaugedata.gauges.append([1, 491450, 3086550, 
-                                        0.0, 1e10])
+    rundata.gaugedata.gauges.append([1, 491350, 3086100, 0.0, 1e10]) # Lake terminus
+    # rundata.gaugedata.gauges.append([2, 0.0, 0.0, 0.0, 1e10]) # Chukhung
+    # rundata.gaugedata.gauges.append([3, 0.0, 0.0, 0.0, 1e10]) # Dingboche
     
 
     return rundata

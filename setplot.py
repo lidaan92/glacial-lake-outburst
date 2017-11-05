@@ -94,13 +94,16 @@ def setplot(plotdata=None):
     #-----------------------------------------
     extents = {"Full Domain": {'extent': [487000, 498000, 3083000, 3090000],
                                'show_contours': False,
-                               'show_patches': 1},
-               "Zoom": {'extent': (490500, 493800, 3085000, 3086500),
-                        'show_contours': True,
-                        'show_patches': 0}}
+                               'show_patches': [1, 1, 1, 1],
+                               'figsize': (6.4, 4.8)},
+               "Zoom 1": {'extent': (488800, 493800, 3085000, 3087000),
+                          'show_contours': True,
+                          'show_patches': 0,
+                          'figsize': (6.4 * 2.0, 4.8)}}
 
     for (name, param_dict) in extents.items():
         plotfigure = plotdata.new_plotfigure(name='Surface %s' % name)
+        plotfigure.kwargs['figsize'] = param_dict['figsize']
 
         # Set up for axes in this figure:
         plotaxes = plotfigure.new_plotaxes('pcolor')
@@ -116,7 +119,7 @@ def setplot(plotdata=None):
         plotitem.pcolor_cmin = -10.0
         plotitem.pcolor_cmax = 10.0
         plotitem.add_colorbar = True
-        plotitem.amr_celledges_show = [0,0,0]
+        plotitem.amr_celledges_show = [0, 0, 0, 0]
         plotitem.patchedges_show = param_dict['show_patches']
 
         # Bathy contour
@@ -126,7 +129,7 @@ def setplot(plotdata=None):
         plotitem.contour_levels = numpy.arange(5000, 6000, 25)
         plotitem.amr_contour_colors = ['k']  # color on each level
         plotitem.kwargs = {'linestyles':'solid','linewidths':1}
-        plotitem.amr_contour_show = [0, 0, 1]  
+        plotitem.amr_contour_show = [0, 0, 0, 1]  
         plotitem.celledges_show = 0
         plotitem.patchedges_show = 0
 
@@ -136,7 +139,7 @@ def setplot(plotdata=None):
         plotitem.contour_levels = numpy.arange(4000, 5000, 25)
         plotitem.amr_contour_colors = ['k']  # color on each level
         plotitem.kwargs = {'linestyles':'dashed','linewidths':1}
-        plotitem.amr_contour_show = [0, 0, 1]  
+        plotitem.amr_contour_show = [0, 0, 0, 1]  
         plotitem.celledges_show = 0
         plotitem.patchedges_show = 0
 
@@ -152,27 +155,22 @@ def setplot(plotdata=None):
         plotaxes.xlimits = param_dict['extent'][:2]
         plotaxes.ylimits = param_dict['extent'][2:]
 
-        def draw_rect(rect, axes, style="k--"):
+        def draw_rect(rect, axes, style="r--"):
             """rect = [xlower, ylower, xupper, yupper"""
             xlower = rect[0]
-            xupper = rect[2]
-            ylower = rect[1]
+            xupper = rect[1]
+            ylower = rect[2]
             yupper = rect[3]
             axes.plot([xlower, xupper], [ylower, ylower], style)
             axes.plot([xupper, xupper], [ylower, yupper], style)
             axes.plot([xupper, xlower], [yupper, yupper], style)
             axes.plot([xlower, xlower], [yupper, ylower], style)
 
-        def draw_rects(cd):
-            axes = plt.gca()
-            # 3086900
-            rectangles = [[491000, 3086950, 491900, 3087250], 
-                          [490750, 3086800, 491400, 3087250]]
-            styles = ['r--', 'b--', 'c--']
-            for (i, rect) in enumerate(rectangles):
-                draw_rect(rect, axes, style=styles[i])
+        def afteraxes(cd):
+            addgauges(cd)
+            draw_rect([491000, 493700, 3085250, 3086250], plt.gca())
 
-        # plotaxes.afteraxes = draw_rects
+        plotaxes.afteraxes = afteraxes
 
     # -----------------------------------------
     # Figures for gauges
