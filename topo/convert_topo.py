@@ -1,17 +1,69 @@
 #!/usr/bin/env python
 
+import sys
+import os
+
 import numpy
 import matplotlib.pyplot as plt
 
 import clawpack.geoclaw.topotools as topotools
+import clawpack.visclaw.colormaps as colormaps
+
+land_cmap = colormaps.make_colormap({ 0.0:[0.1,0.4,0.0],
+                                         0.25:[0.0,1.0,0.0],
+                                          0.5:[0.8,1.0,0.5],
+                                          1.0:[0.8,0.5,0.2]})
 
 
-def convert_topo(path, out_path):
-    topo = topotools.Topography(path=topo_path, topo_type=5)
-    topo.read()
-    # Remove 0 values around perimiter
-    topo.Z = numpy.flipud(topo.Z[:-1, :-1])
-    topo.write(out_path, topo_type=3)
+locations = {'imja': [{'path': 'MERGE-IMJA-LAKE-BATHY-ASTDEM2-29m-16bit.tif',
+                       'out_path': 'imja.tt3',
+                       'strip_zeros': True,
+                       'contours': (4730, 4740, 5000),
+                       'limits': (4700, 4800)},
+                      {'path': 'ASTGTM2_everest_mosaic.tif',
+                       'out_path': 'everest.tt3',
+                       'strip_zeros': True,
+                       'contours': (4730, 4740, 5000),
+                       'limits': (4700, 4800)}
+                     ],
+             'barun': [{'path': 'MOSAIC-BARUN-LAKE-BATHY-ASTDEM2-29m-16bit.tif',
+                        'out_path': 'barun.tt3',
+                        'strip_zeros': False,
+                        'contours': (4730, 4740, 5000),
+                        'limits': (4700, 4800)}
+                      ],
+             'thulagi': [{'path': 'MOSAIC-THULAGI-LAKE-BATHY-ASTDEM2-29m-16bit.tif',
+                          'out_path': 'thulagi.tt3',
+                          'strip_zeros': False,
+                          'contours': (4730, 4740, 5000),
+                          'limits': (4700, 4800)}]
+
+             }
+
+def convert_topo(location, plot=False):
+    """Convert geotiff to topotype 3"""
+    
+    for loc_dict in locations[location]:
+        topo = topotools.Topography(path=loc_dict['path'], topo_type=5)
+        topo.read()
+
+        if loc_dict['strip_zeros']:
+            # Remove 0 values around perimiter
+            topo.Z = numpy.flipud(topo.Z[:-1, :-1])
+        
+        topo.write(loc_dict['out_path'], topo_type=3)
+
+
+        if plot:
+            fig = plt.figure()
+            axes = fig.add_subplot(1, 1, 1)
+
+
+            topo.plot(axes=axes, contour_levels=loc_dict['contours'], 
+                                 limits=loc_dict['limits'],
+                                  cmap=land_cmap)
+    if plot:
+        plt.show()
 
 
 def draw_rect(rect, axes, style="k--"):
@@ -26,36 +78,19 @@ def draw_rect(rect, axes, style="k--"):
     axes.plot([xlower, xlower], [yupper, ylower], style)
 
 
-def plot_topo(path, axes=None):
-
-    topo = topotools.Topography(path=path, topo_type=3)
-
-    if axes is None:
-        fig = plt.figure()
-        axes = fig.add_subplot(1, 1, 1)
-    topo.plot(axes=axes, contour_levels=[5000], limits=(4853, 5000))
-
-    include_boxes = [[491100.0, 3085150.0, 493800.0, 3086400.0]]
-
-    offset_x = [0.0, 0.0]
-    offset_y = [0.0, 0.0]
-
-    exclude_boxes = [[491000.0 - offset_x[0], 3086950.0 - offset_y[0], 
-                      491900.0 - offset_x[0], 3087250.0 - offset_y[1]],
-                     [490750.0 - offset_x[1], 3086800.0 - offset_y[1], 
-                      491400.0 - offset_x[1], 3087250.0 - offset_y[1]]]
-
-    for rect in include_boxes:
-        draw_rect(rect, axes, style='b--')
-    for rect in exclude_boxes:
-        draw_rect(rect, axes, style='r--')
-
-
 if __name__ == '__main__':
-    topo_path = './MERGE-IMJA-LAKE-BATHY-ASTDEM2-29m-16bit.tif'
-    out_path = "./imja.tt3"
+    
+    # Command line parsing
+    if len(sys.argv) == 1:
+        print("Available locations:")
+        for location in locations.keys():
+            print("  %s" % location)
+        sys.exit(0)
+    
+    elif len(sys.argv) == 2:
+        location = sys.argv[1].lower()
 
-    convert_topo(topo_path, out_path)
-    plot_topo(out_path)
+    else:
+        raise InputError("Expected a location.")
 
-    plt.show()
+    convert_topo(location)

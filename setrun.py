@@ -93,10 +93,10 @@ def setrun(claw_pkg='geoclaw'):
     clawdata.num_eqn = 3
 
     # Number of auxiliary variables in the aux array (initialized in setaux)
-    clawdata.num_aux = 1
+    clawdata.num_aux = 3
 
     # Index of aux array corresponding to capacity function, if there is one:
-    clawdata.capa_index = 0
+    clawdata.capa_index = 2
 
     
     
@@ -297,7 +297,7 @@ def setrun(claw_pkg='geoclaw'):
     # This must be a list of length maux, each element of which is one of:
     #   'center',  'capacity', 'xleft', or 'yleft'  (see documentation).
 
-    amrdata.aux_type = ['center']
+    amrdata.aux_type = ['center', 'capacity', 'center']
 
 
     # Flag using refinement routine flag2refine rather than richardson error
@@ -374,7 +374,7 @@ def setgeo(rundata):
        
     # == Physics ==
     geo_data.gravity = 9.81
-    geo_data.coordinate_system = 1
+    geo_data.coordinate_system = 2
     geo_data.earth_radius = 6367.5e3
 
     # == Forcing Options
@@ -398,6 +398,7 @@ def setgeo(rundata):
     topo_data = rundata.topo_data
     # for topography, append lines of the form
     #    [topotype, minlevel, maxlevel, t1, t2, fname]
+    # topo_path = os.path.join("topo", "imja.tt3")
     topo_path = os.path.join("topo", "imja.tt3")
     topo_data.topofiles.append([3, 1, 3, 0., 1.e10, topo_path])
 
