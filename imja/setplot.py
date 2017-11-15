@@ -11,12 +11,15 @@ from __future__ import absolute_import
 from __future__ import print_function
 from six.moves import range
 
+import os
+
 import numpy
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 
 
 import clawpack.visclaw.colormaps as colormaps
+import clawpack.clawutil.data as data
 from clawpack.geoclaw import topotools
 import clawpack.geoclaw.geoplot as geoplot
 
@@ -29,15 +32,13 @@ pressure_cmap = plt.get_cmap('PuBu')
 land_cmap = geoplot.land_colors
 
 # Contruct lake mask for plotting
-init_region = [491100.0, 3085150.0, 493800.0, 3086400.0]
+init_region = [86.910814, 86.951576, 27.883193, 27.912485]
 cutouts = []
-# cutouts = [[491000, 3086950, 491900, 3087250],
-#            [490750, 3086800, 491400, 3087250]]
 
 def lake_mask(x, y):
     region = numpy.where((init_region[0] <= x) * 
-                         (x <= init_region[2]) *
-                         (init_region[1] <= y) * 
+                         (x <= init_region[1]) *
+                         (init_region[2] <= y) * 
                          (y <= init_region[3]), True, False)
     for cutout in cutouts:
         region = numpy.where((cutout[0] < x) * (x < cutout[2]) *
@@ -76,8 +77,11 @@ def setplot(plotdata=None):
         from clawpack.visclaw.data import ClawPlotData
         plotdata = ClawPlotData()
 
-
     plotdata.clearfigures()  # clear any old figures,axes,items data
+
+    # Import data objects
+    clawdata = data.ClawInputData(2)
+    clawdata.read(os.path.join(plotdata.outdir, 'claw.data'))
 
 
     # To plot gauge locations on pcolor or contour plot, use this as
@@ -92,11 +96,12 @@ def setplot(plotdata=None):
     #-----------------------------------------
     # Figure for surface
     #-----------------------------------------
-    extents = {"Full Domain": {'extent': [487000, 498000, 3083000, 3090000],
+    extents = {"Full Domain": {'extent': [clawdata.lower[0], clawdata.upper[0], 
+                                          clawdata.lower[1], clawdata.upper[1]],
                                'show_contours': False,
                                'show_patches': [1, 1, 1, 1],
                                'figsize': (6.4, 4.8)},
-               "Zoom 1": {'extent': (488800, 493800, 3085000, 3087000),
+               "Zoom 1": {'extent': init_region,
                           'show_contours': True,
                           'show_patches': 0,
                           'figsize': (6.4 * 2.0, 4.8)}}

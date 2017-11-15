@@ -15,24 +15,18 @@ land_cmap = colormaps.make_colormap({ 0.0:[0.1,0.4,0.0],
                                           1.0:[0.8,0.5,0.2]})
 
 
-locations = {'imja': [{'path': 'MERGE-IMJA-LAKE-BATHY-ASTDEM2-29m-16bit.tif',
-                       'out_path': 'imja.tt3',
-                       'strip_zeros': True,
-                       'contours': (4730, 4740, 5000),
-                       'limits': (4700, 4800)},
-                      {'path': 'ASTGTM2_everest_mosaic.tif',
+locations = {'imja': [{'path': 'ASTGTM2_everest_mosaic.tif',
                        'out_path': 'everest.tt3',
                        'strip_zeros': True,
                        'contours': (4730, 4740, 5000),
-                       'limits': (4700, 4800)}
-                     ],
-             'barun': [{'path': 'MOSAIC-BARUN-LAKE-BATHY-ASTDEM2-29m-16bit.tif',
-                        'out_path': 'barun.tt3',
+                       'limits': (4700, 4800)}],
+             'barun': [{'path': 'ASTGTM2_everest_mosaic.tif',
+                        'out_path': 'everest.tt3',
                         'strip_zeros': False,
                         'contours': (4730, 4740, 5000),
                         'limits': (4700, 4800)}
                       ],
-             'thulagi': [{'path': 'MOSAIC-THULAGI-LAKE-BATHY-ASTDEM2-29m-16bit.tif',
+             'thulagi': [{'path': "ASTGTM2_Thulagi_mosaic.tif",
                           'out_path': 'thulagi.tt3',
                           'strip_zeros': False,
                           'contours': (4730, 4740, 5000),
@@ -44,20 +38,25 @@ def convert_topo(location, plot=False):
     """Convert geotiff to topotype 3"""
     
     for loc_dict in locations[location]:
-        topo = topotools.Topography(path=loc_dict['path'], topo_type=5)
-        topo.read()
+        topo = None
+        if not os.path.exists(loc_dict['out_path']):
 
-        if loc_dict['strip_zeros']:
-            # Remove 0 values around perimiter
-            topo.Z = numpy.flipud(topo.Z[:-1, :-1])
-        
-        topo.write(loc_dict['out_path'], topo_type=3)
+            topo = topotools.Topography(path=loc_dict['path'], topo_type=5)
+            topo.read()
+
+            if loc_dict['strip_zeros']:
+                # Remove 0 values around perimiter
+                topo.Z = numpy.flipud(topo.Z[:-1, :-1])
+            
+            topo.write(loc_dict['out_path'], topo_type=3)
 
 
         if plot:
+            if topo is None:
+                topo = topotools.Topography(path=loc_dict['out_path'])
+            
             fig = plt.figure()
             axes = fig.add_subplot(1, 1, 1)
-
 
             topo.plot(axes=axes, contour_levels=loc_dict['contours'], 
                                  limits=loc_dict['limits'],
@@ -93,4 +92,4 @@ if __name__ == '__main__':
     else:
         raise InputError("Expected a location.")
 
-    convert_topo(location)
+    convert_topo(location, plot=True)

@@ -3,6 +3,7 @@
 import sys
 import os
 import subprocess
+import shutil
 
 import numpy
 import matplotlib.pyplot as plt
@@ -10,56 +11,59 @@ import matplotlib.pyplot as plt
 import clawpack.geoclaw.topotools as tt
 import clawpack.geoclaw.dtopotools as dt
 
-# Slide specifications
-scenarios = {'imja': {"scenarios":{"island_peak": {
-                                   "start": (492050, 3086800),
-                                   "slide_speed": 25,
-                                   "max_length": 1e3,
-                                   "theta": 4.0 * numpy.pi / 3.0,
-                                   "sigma": 2.5e2,
-                                   "A": 100.0,
-                                   "t_end": 35.0},
-                               "amphulapche": {
-                                   "start": (491300, 3085200),
-                                   "slide_speed": 50,
-                                   "max_length": 5e3,
-                                   "theta": numpy.pi / 3.0,
-                                   "sigma": 500.0,
-                                   "A": 100.0,
-                                   "t_end": 35.0},
-                               "snow_line": {
-                                  "start": (494000, 3085800),
-                                  "slide_speed": 50,
-                                  "max_length": 1e3,
-                                  "theta": numpy.pi,
-                                  "sigma": 500,
-                                  "A": 200.0,
-                                  "t_end": 35.0}},
-                  "extent": (491000, 494500, 3085200, 3086800),
-                  "topo_path": "./imja.tt3"
-                 },
-         'barun': {"scenarios": {},
-                   "slide_path": 'barun_slide.tt3'},
-         'thulagi': {"scenarios": {},
-                     "slide_path": 'thulagi_slide.tt3'}
-        }
+
+locations = {"imja": {"scenarios": {"island_peak": {"start": (86.930245, 27.905104),
+                                                    "slide_speed": 25,
+                                                    "max_length": 1e3,
+                                                    "theta": 4.0 * numpy.pi / 3.0,
+                                                    "sigma": 2.5e2,
+                                                    "A": 100.0,
+                                                    "t_end": 35.0},
+                                     "amphulapche": {"start": (86.911737, 27.885901),
+                                                     "slide_speed": 50,
+                                                     "max_length": 5e3,
+                                                     "theta": numpy.pi / 3.0,
+                                                     "sigma": 500.0,
+                                                     "A": 100.0,
+                                                     "t_end": 35.0},
+                                     "snow_line": {"start": (86.942428, 27.897892),
+                                                   "slide_speed": 50,
+                                                   "max_length": 1e3,
+                                                   "theta": numpy.pi,
+                                                   "sigma": 500,
+                                                   "A": 200.0,
+                                                   "t_end": 35.0}
+                                   },
+                     "extent": [86.910814, 86.951576, 27.883193, 27.912485],
+                     "topo_path": "./everest.tt3"
+                    },
+            }
+
 
 def transform(x, y, theta=0.0):
     return (x * numpy.cos(theta) + y * numpy.sin(theta), 
             x * numpy.sin(theta) - y * numpy.cos(theta))
 
-def slide_topo(x, y, t, start, slide_speed, max_length, theta, sigma, A, 
-               estimate_mass=False):
+
+def slide_topo(x, y, t, start, slide_speed, max_length, theta, sigma_slide, 
+               amplitude, estimate_mass=False):
+
+    # Convert input to lat-long coordinates
+    deg2meters = 111.32e3
+    speed = slide_speed / deg2meters
+    L = max_length / deg2meters
+    sigma = sigma_slide / deg2meters
+    A = amplitude / deg2meters
 
     # Transform coordinates
     eta, zeta = transform(x, y, theta)
     eta_start, zeta_start = transform(start[0], start[1], theta)
 
     # Derive lengths in eta-zeta coordinate system
-    eta_c = eta_start + slide_speed * t
+    eta_c = eta_start + speed * t
     zeta_c = zeta_start
-    if eta_c - eta_start > max_length:
-        eta_start = eta_c - max_length
+    if eta_c - eta_start > L:
+        eta_start = eta_c - L
     else:
         eta_end = eta_start
 
@@ -80,31 +84,34 @@ def slide_topo(x, y, t, start, slide_speed, max_length, theta, sigma, A,
     estimated_mass += (A * numpy.pi * numpy.sqrt(sigma) / 4.0) ** 2
 
     if estimate_mass:
-        estimated_mass *= 2000.0 / 1e6
+        estimated_mass *= 2000.0 / (1e3 * 1e6) * deg2meters**3
         print("Estimated Mass = %s Million Tons" % (estimated_mass))
 
     return slide
 
+1 gm     (0.01 m)^3
+  --   * ---------
+  cm^3   (0.001 kg)
+
 
 def create_dtopo(location, scenario_name, N=100, estimate_mass=True, 
-                                          force=False, plot=False):
+                 force=False, plot=False, topo_path=None):
 
-    scenario = location['scenarios'][scenario_name]
+    scenario = locations[location]["scenarios"][scenario_name]
+    extent = locations[location]['extent']
+    path = os.path.join("..", location, "%s.tt3" % scenario_name)
 
-    dtopo_path = "%s_dtopo.tt3" % scenario_name
-    if not os.path.exists(dtopo_path):
+    if os.path.exists(path):
         if force:
-            shutil.rmtree(dtopo_path)
+            os.remove(path)
         else:
             print("Slide file already exists.")
             sys.exit(0)
 
-
-
     # Create dtopo
     dtopo = dt.DTopography()
-    dtopo.x = numpy.linspace(location['extent'][0], location['extent'][1], N)
-    dtopo.y = numpy.linspace(location['extent'][2], location['extent'][3], N)
+    dtopo.x = numpy.linspace(extent[0], extent[1], N)
+    dtopo.y = numpy.linspace(extent[2], extent[3], N)
     dtopo.X, dtopo.Y = numpy.meshgrid(dtopo.x, dtopo.y)
     dtopo.times = numpy.linspace(0, scenario['t_end'], 8)
     dtopo.dZ = numpy.empty((dtopo.times.shape[0], dtopo.x.shape[0], 
@@ -112,19 +119,19 @@ def create_dtopo(location, scenario_name, N=100, estimate_mass=True,
 
     for (i, t) in enumerate(dtopo.times):
         dtopo.dZ[i, :, :] = slide_topo(dtopo.X, dtopo.Y, t, 
-                                       start=scenario['start'],
-                                       slide_speed=scenario['slide_speed'],
-                                       max_length=scenario['max_length'],
-                                       theta=scenario['theta'],
-                                       sigma=scenario['sigma'],
-                                       A=scenario['A'],
+                                       scenario["start"],
+                                       scenario["slide_speed"],
+                                       scenario["max_length"],
+                                       scenario["theta"],
+                                       scenario["sigma"],
+                                       scenario["A"],
                                        estimate_mass=estimate_mass)
-    dtopo.write(path=dtopo_path)
 
+    dtopo.write(path=path)
 
     if plot:
       # Load topo for comparison
-      topo = tt.Topography(path=location['topo_path'], topo_type=3)
+      topo = tt.Topography(path=locations[location]["topo_path"], topo_type=3)
 
       if not os.path.exists("./%s" % scenario_name):
           os.mkdir(scenario_name)
@@ -151,25 +158,23 @@ def create_dtopo(location, scenario_name, N=100, estimate_mass=True,
 
 if __name__ == "__main__":
 
-    # Command line parsing
-    if len(sys.argv) <= 2:
-        # Print available locationis and scenarios
-        print("Available locations and scenarios:")
-        for (location, loc_dict) in scenarios.items():
-            print("  Location %s:" % location)
-            for scenario_name in loc_dict['scenarios'].keys():
-                print("    %s" % scenario_name)
-        sys.exit(0)
+    location = sys.argv[1]
+    force = False
+    plot = False
 
-    elif len(sys.argv) == 3:
-        location = sys.argv[1]
+    if len(sys.argv) == 2:
+        scenarios = locations[location]['scenarios'].keys()
+    elif len(sys.argv) >= 3:
         scenario = sys.argv[2]
+        scenarios = [scenario]
+
+        if len(sys.argv) >= 4:
+            force = bool(sys.argv[3])
+            if len(sys.argv) >= 5:
+                plot = bool(sys.argv[4])
 
     else:
-        raise InputError("Expected a location and scenario.")
+        raise InputError("Need the location and scenario to proceed.")
 
-    if scenario not in scenarios[location]['scenarios'].keys():
-        raise ValueError("Unknown scenario %s for location %s." % (scenario, 
-                                                                   location))
-
-    create_dtopo(scenarios[location], scenario)
+    for scenario in scenarios:
+        create_dtopo(location, scenario, force=force, plot=plot)

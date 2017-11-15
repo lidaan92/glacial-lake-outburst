@@ -8,8 +8,11 @@ that will be read in by the Fortran code.
 
 from __future__ import absolute_import
 from __future__ import print_function
+
 import os
-import numpy as np
+import subprocess
+
+import numpy
 
 try:
     CLAW = os.environ['CLAW']
@@ -19,6 +22,9 @@ except:
 # Scratch directory for storing topo and dtopo files:
 scratch_dir = os.path.join(CLAW, 'geoclaw', 'scratch')
 
+lake_region = [86.910814, 86.951576, 27.883193, 27.912485]
+
+scenario = "snow_line"
 
 #------------------------------
 def setrun(claw_pkg='geoclaw'):
@@ -74,14 +80,14 @@ def setrun(claw_pkg='geoclaw'):
     clawdata.num_dim = num_dim
 
     # Lower and upper edge of computational domain:
-    clawdata.lower[0] = 487000
-    clawdata.upper[0] = 498000
+    clawdata.lower[0] = 86.816889
+    clawdata.upper[0] = 86.968107
 
-    clawdata.lower[1] = 3083000
-    clawdata.upper[1] = 3090000
+    clawdata.lower[1] = 27.880479
+    clawdata.upper[1] = 27.921050
 
     # Number of grid cells: Coarsest grid
-    coarse_delta = 250
+    coarse_delta = 0.005
     clawdata.num_cells[0] = int((clawdata.upper[0] - clawdata.lower[0]) / coarse_delta)
     clawdata.num_cells[1] = int((clawdata.upper[1] - clawdata.lower[1]) / coarse_delta)
 
@@ -339,18 +345,21 @@ def setrun(claw_pkg='geoclaw'):
     rundata.regiondata.regions = []
     # to specify regions of refinement append lines of the form
     #  [minlevel,maxlevel,t1,t2,x1,x2,y1,y2]
-    lake_region = [4, 4, 0.0, 1e10, 491000, 493700, 3085250, 3086250]
+    
 
-    rundata.regiondata.regions.append(lake_region)
+    rundata.regiondata.regions.append([4, 4, 0.0, 1e10, lake_region[0], 
+                                                        lake_region[1], 
+                                                        lake_region[2], 
+                                                        lake_region[3]])
 
     # ---------------
     # Gauges:
     # ---------------
     rundata.gaugedata.gauges = []
     # for gauges append lines of the form  [gaugeno, x, y, t1, t2]
-    rundata.gaugedata.gauges.append([1, 491350, 3086100, 0.0, 1e10]) # Lake terminus
-    # rundata.gaugedata.gauges.append([2, 0.0, 0.0, 0.0, 1e10]) # Chukhung
-    # rundata.gaugedata.gauges.append([3, 0.0, 0.0, 0.0, 1e10]) # Dingboche
+    rundata.gaugedata.gauges.append([1, 86.913280, 27.899973, 0.0, 1e10]) # Lake terminus
+    rundata.gaugedata.gauges.append([2, 86.872098, 27.903647, 0.0, 1e10]) # Chukhung
+    rundata.gaugedata.gauges.append([3, 86.832315, 27.891044, 0.0, 1e10]) # Dingboche
     
 
     return rundata
@@ -399,14 +408,26 @@ def setgeo(rundata):
     # for topography, append lines of the form
     #    [topotype, minlevel, maxlevel, t1, t2, fname]
     # topo_path = os.path.join("topo", "imja.tt3")
-    topo_path = os.path.join("topo", "imja.tt3")
+    topo_path = os.path.join("../", "topo", "everest.tt3")
     topo_data.topofiles.append([3, 1, 3, 0., 1.e10, topo_path])
 
     # == setdtopo.data values ==
     dtopo_data = rundata.dtopo_data
     # for moving topography, append lines of the form :   (<= 1 allowed for now!)
     #   [topotype, minlevel,maxlevel,fname]
-    dtopo_data.dtopofiles.append([3, 0, 10, "./topo/imja_slide.tt3"])
+    dtopo_path = os.path.join(".", "%s.tt3" % scenario)
+    dtopo_data.dtopofiles.append([3, 0, 10, dtopo_path])
+
+    # Check for the above files
+    if not os.path.exists(topo_path):
+        raise Exception("Check to make sure that the topography file ",
+                        "%s exists.  If not run the " % topo_path,
+                        "convert_topo.py script." )
+
+    if not os.path.exists(dtopo_path):
+        raise Exception("Check to make sure that the slide file ",
+                        "%s exists.  If not run the " % dtopo_path,
+                        "make_dtopo.py script." )
 
     # == setqinit.data values ==
     rundata.qinit_data.qinit_type = 0
